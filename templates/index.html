@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RMS Titanic — Passenger Survival Predictor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-ocean: #09131e;
+            --card-bg: rgba(18, 30, 48, 0.85);
+            --card-border: rgba(148, 187, 233, 0.18);
+            --text-main: #edf2f7;
+            --text-muted: #94a3b8;
+            --gold: #d4af37;
+            --gold-hover: #b89628;
+            --survived-green: #10b981;
+            --survived-bg: rgba(16, 185, 129, 0.15);
+            --perished-red: #ef4444;
+            --perished-bg: rgba(239, 68, 68, 0.15);
+            --accent-blue: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at 50% 20%, #15293e 0%, #08111c 70%, #03070c 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .badge-historic {
+            display: inline-block;
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            padding: 0.35rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.6rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #ffffff;
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* Preset Buttons */
+        .preset-strip {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin: 1.8rem 0 2.2rem;
+        }
+
+        .preset-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-right: 0.4rem;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: #e2e8f0;
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .preset-btn:hover {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent-blue);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        /* Main Grid */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Card */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.8rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .form-group-full {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 550px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group-full {
+                grid-column: span 1;
+            }
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            background: rgba(10, 20, 32, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+            background: rgba(12, 24, 38, 0.95);
+        }
+
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* Submit Button */
+        .btn-predict {
+            width: 100%;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #d4af37 0%, #b89628 100%);
+            color: #0c1622;
+            border: none;
+            border-radius: 10px;
+            padding: 0.9rem 1.5rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.45);
+            filter: brightness(1.08);
+        }
+
+        .btn-predict:active {
+            transform: translateY(0);
+        }
+
+        /* Result Panel */
+        .result-container {
+            text-align: center;
+        }
+
+        .verdict-banner {
+            border-radius: 14px;
+            padding: 1.6rem 1rem;
+            margin-bottom: 1.6rem;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .verdict-banner.survived {
+            background: var(--survived-bg);
+            border-color: var(--survived-green);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .verdict-banner.perished {
+            background: var(--perished-bg);
+            border-color: var(--perished-red);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+        }
+
+        .verdict-icon {
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .verdict-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .verdict-banner.survived .verdict-title {
+            color: #34d399;
+        }
+
+        .verdict-banner.perished .verdict-title {
+            color: #f87171;
+        }
+
+        .verdict-desc {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-top: 0.3rem;
+        }
+
+        /* Probability Bars */
+        .prob-section {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .prob-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .prob-survive-val {
+            color: #34d399;
+        }
+
+        .prob-perish-val {
+            color: #f87171;
+        }
+
+        .meter-bar {
+            height: 14px;
+            background: #1e293b;
+            border-radius: 9999px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .meter-fill-survive {
+            background: linear-gradient(90deg, #059669, #10b981);
+            height: 100%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .meter-fill-perish {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            height: 100%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Insights List */
+        .factors-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            text-align: left;
+        }
+
+        .factors-list {
+            list-style: none;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .factor-item {
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent-blue);
+            padding: 0.55rem 0.8rem;
+            border-radius: 0 6px 6px 0;
+            color: #e2e8f0;
+        }
+
+        /* Placeholder state */
+        .placeholder-box {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .placeholder-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 3.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <span class="badge-historic">Historical Machine Learning Model</span>
+        <h1>Titanic Survival Predictor</h1>
+        <p class="subtitle">Evaluate passenger survival probability on the ill-fated maiden voyage of RMS Titanic using our trained Random Forest Classifier.</p>
+        
+        <!-- Quick Presets for Instant Testing -->
+        <div class="preset-strip">
+            <span class="preset-label">Quick Scenarios:</span>
+            <button type="button" class="preset-btn" onclick="applyPreset(1, 'female', 17, 1, 1, 150.0, 'C')">
+                🌹 Rose DeWitt Bukater (1st Class)
+            </button>
+            <button type="button" class="preset-btn" onclick="applyPreset(3, 'male', 20, 0, 0, 7.8, 'S')">
+                🎨 Jack Dawson (3rd Class)
+            </button>
+            <button type="button" class="preset-btn" onclick="applyPreset(1, 'male', 47, 1, 0, 220.0, 'C')">
+                🎩 John Jacob Astor (1st Class)
+            </button>
+            <button type="button" class="preset-btn" onclick="applyPreset(3, 'female', 28, 1, 3, 21.0, 'S')">
+                👨‍👩‍👧‍👦 3rd Class Family Mother
+            </button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- Input Form Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2>🚢 Passenger Manifest Details</h2>
+            </div>
+
+            <form id="predictionForm" method="POST" action="/">
+                <div class="form-grid">
+                    <!-- Ticket Class -->
+                    <div class="form-group">
+                        <label class="form-label" for="pclass">Ticket Class (Pclass)</label>
+                        <select class="form-select" id="pclass" name="pclass" required>
+                            <option value="1" {% if form_data.pclass == '1' %}selected{% endif %}>1st Class — Luxury Suites</option>
+                            <option value="2" {% if form_data.pclass == '2' %}selected{% endif %}>2nd Class — Middle Class</option>
+                            <option value="3" {% if form_data.pclass == '3' %}selected{% endif %}>3rd Class — Economy / Steerage</option>
+                        </select>
+                        <div class="form-hint">Determined cabin deck & boat accessibility</div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-group">
+                        <label class="form-label" for="sex">Gender</label>
+                        <select class="form-select" id="sex" name="sex" required>
+                            <option value="female" {% if form_data.sex == 'female' %}selected{% endif %}>Female</option>
+                            <option value="male" {% if form_data.sex == 'male' %}selected{% endif %}>Male</option>
+                        </select>
+                        <div class="form-hint">Enforced "Women & Children first" protocol</div>
+                    </div>
+
+                    <!-- Age -->
+                    <div class="form-group">
+                        <label class="form-label" for="age">Age (in years)</label>
+                        <input type="number" step="0.5" min="0.5" max="90" class="form-control" id="age" name="age" value="{{ form_data.age }}" required>
+                        <div class="form-hint">Children received high evacuation priority</div>
+                    </div>
+
+                    <!-- Ticket Fare -->
+                    <div class="form-group">
+                        <label class="form-label" for="fare">Ticket Fare (£)</label>
+                        <input type="number" step="0.1" min="0" max="600" class="form-control" id="fare" name="fare" value="{{ form_data.fare }}" required>
+                        <div class="form-hint">Historical avg: ~£8 (3rd), ~£20 (2nd), ~£85+ (1st)</div>
+                    </div>
+
+                    <!-- Siblings / Spouses -->
+                    <div class="form-group">
+                        <label class="form-label" for="sibsp">Siblings / Spouses Aboard</label>
+                        <input type="number" min="0" max="10" class="form-control" id="sibsp" name="sibsp" value="{{ form_data.sibsp }}" required>
+                        <div class="form-hint">Number of brothers, sisters, or spouse</div>
+                    </div>
+
+                    <!-- Parents / Children -->
+                    <div class="form-group">
+                        <label class="form-label" for="parch">Parents / Children Aboard</label>
+                        <input type="number" min="0" max="10" class="form-control" id="parch" name="parch" value="{{ form_data.parch }}" required>
+                        <div class="form-hint">Number of parents or children on board</div>
+                    </div>
+
+                    <!-- Port of Embarkation -->
+                    <div class="form-group-full">
+                        <label class="form-label" for="embarked">Port of Embarkation</label>
+                        <select class="form-select" id="embarked" name="embarked" required>
+                            <option value="S" {% if form_data.embarked == 'S' %}selected{% endif %}>Southampton, England (S)</option>
+                            <option value="C" {% if form_data.embarked == 'C' %}selected{% endif %}>Cherbourg, France (C)</option>
+                            <option value="Q" {% if form_data.embarked == 'Q' %}selected{% endif %}>Queenstown / Cobh, Ireland (Q)</option>
+                        </select>
+                        <div class="form-hint">Where the passenger boarded the vessel</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-predict" id="submitBtn">
+                    <span>⚡ Predict Survival Outcome</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Prediction Result Card -->
+        <div class="card result-card" id="resultCard">
+            <div class="card-header">
+                <h2>📊 Prediction Analysis</h2>
+            </div>
+
+            {% if result and not result.error %}
+                <div class="result-container">
+                    <!-- Verdict Banner -->
+                    <div class="verdict-banner {% if result.survived %}survived{% else %}perished{% endif %}">
+                        <div class="verdict-icon">
+                            {% if result.survived %}🛟{% else %}⚓{% endif %}
+                        </div>
+                        <div class="verdict-title">{{ result.verdict }}</div>
+                        <div class="verdict-desc">
+                            {% if result.survived %}
+                                Passenger is predicted to have evacuated safely.
+                            {% else %}
+                                Passenger is predicted to have perished during the disaster.
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Probabilities Section -->
+                    <div class="prob-section">
+                        <div class="prob-labels">
+                            <span class="prob-survive-val">Survival: <strong>{{ result.survival_probability }}%</strong></span>
+                            <span class="prob-perish-val">Mortality: <strong>{{ result.mortality_probability }}%</strong></span>
+                        </div>
+                        <div class="meter-bar">
+                            <div class="meter-fill-survive" style="width: {{ result.survival_probability }}%;"></div>
+                            <div class="meter-fill-perish" style="width: {{ result.mortality_probability }}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Factors -->
+                    <div class="factors-title">Key Deciding Factors</div>
+                    <ul class="factors-list">
+                        {% for f in result.factors %}
+                            <li class="factor-item">• {{ f }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% elif result and result.error %}
+                <div class="verdict-banner perished">
+                    <div class="verdict-icon">⚠️</div>
+                    <div class="verdict-title">Error</div>
+                    <div class="verdict-desc">{{ result.error }}</div>
+                </div>
+            {% else %}
+                <div class="placeholder-box">
+                    <div class="placeholder-icon">🧭</div>
+                    <h3>Awaiting Passenger Data</h3>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Fill in the manifest details or click any preset scenario above to simulate survival likelihood.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <p>RMS Titanic Survival Predictor • Model Engine: Scikit-Learn Random Forest Classifier (100 Trees) • Standalone Local App</p>
+    </footer>
+</div>
+
+<script>
+    // Preset helper
+    function applyPreset(pclass, sex, age, sibsp, parch, fare, embarked) {
+        document.getElementById('pclass').value = pclass;
+        document.getElementById('sex').value = sex;
+        document.getElementById('age').value = age;
+        document.getElementById('sibsp').value = sibsp;
+        document.getElementById('parch').value = parch;
+        document.getElementById('fare').value = fare;
+        document.getElementById('embarked').value = embarked;
+
+        // Auto submit for immediate feedback
+        document.getElementById('predictionForm').submit();
+    }
+</script>
+
+</body>
+</html>
+
